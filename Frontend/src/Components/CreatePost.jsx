@@ -1,95 +1,68 @@
-import React, { useState } from 'react';
-import { FaImage, FaSmile, FaGlobe } from "react-icons/fa";
-import { IoMdClose } from "react-icons/io";
+import React, { useState } from 'react';;
 import Avatar from 'react-avatar';
-
+import { CiImageOn } from "react-icons/ci";
+import { TWEET_API_ENDPOINT } from '../Utils/constant.js'
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { getRefresh, getIsActive } from '../Redux/tweetSlice.js';
 function CreatePost() {
-    const [postText, setPostText] = useState('');
-    const [selectedImage, setSelectedImage] = useState(null);
-
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setSelectedImage(reader.result);
-            };
-            reader.readAsDataURL(file);
+    const [description, setDescription] = useState("");
+    const { user } = useSelector(store => store.user)
+    const { isActive } = useSelector(store => store.tweet)
+    const dispatch = useDispatch()
+    const forYouHandler = () => {
+        dispatch(getIsActive(true))
+    }
+    const followingHandler = () => {
+        dispatch(getIsActive(false))
+    }
+    const submitHandler = async () => {
+        try {
+            const response = await axios.post(`${TWEET_API_ENDPOINT}/create`, { description, id: user?._id }, {
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                withCredentials: true,
+            })
+            if (response.data.success) {
+                toast.success(response.data.message);
+                setDescription("");
+                dispatch(getRefresh())
+            }
+        } catch (error) {
+            toast.error(error.response.data.message);
         }
-    };
 
-    const removeImage = () => {
-        setSelectedImage(null);
-    };
-
+    }
     return (
-        <div className="w-full border-b border-gray-200">
-            <div className="p-4">
-                <div className="flex gap-3">
-                    <div className="flex-shrink-0">
-                        <Avatar 
-                            src="https://picsum.photos/200" 
-                            size="48" 
-                            round={true} 
-                            className="cursor-pointer"
-                        />
+        <div className='w-[100%]'>
+            <div>
+                <div className='flex items-center justify-evenly border-b border-gray-200'>
+                    <div onClick={forYouHandler} className={`${isActive ? "border-b-4 border-blue-600" : "border-b-4 border-transparent"} cursor-pointer hover:bg-gray-200 w-full text-center px-4 py-3`}>
+                        <h1 className='font-semibold text-gray-600 text-lg'>For you</h1>
                     </div>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 text-blue-400 mb-2">
-                            <span className="text-sm font-medium">Everyone</span>
-                            <FaGlobe size={14} />
+                    <div onClick={followingHandler} className={`${!isActive ? "border-b-4 border-blue-600" : "border-b-4 border-transparent"} cursor-pointer hover:bg-gray-200 w-full text-center px-4 py-3`}>
+                        <h1 className='font-semibold text-gray-600 text-lg'>Following</h1>
+                    </div>
+                </div>
+                <div >
+                    <div className='flex items-center p-4'>
+                        <div>
+                            <Avatar src="https://picsum.photos/200" size="40" round={true} />
                         </div>
-                        <textarea
-                            className="w-full text-xl outline-none resize-none placeholder-gray-500"
-                            placeholder="What's happening?"
-                            rows={3}
-                            value={postText}
-                            onChange={(e) => setPostText(e.target.value)}
-                        />
-                        
-                        {selectedImage && (
-                            <div className="relative mt-3 rounded-xl overflow-hidden">
-                                <img 
-                                    src={selectedImage} 
-                                    alt="Preview" 
-                                    className="w-full h-auto rounded-xl"
-                                />
-                                <button 
-                                    onClick={removeImage}
-                                    className="absolute top-2 left-2 bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-70"
-                                >
-                                    <IoMdClose size={20} color="white" />
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
-                            <div className="flex items-center gap-4">
-                                <label className="cursor-pointer">
-                                    <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        className="hidden" 
-                                        onChange={handleImageChange}
-                                    />
-                                    <FaImage size={20} className="text-blue-400 hover:text-blue-500" />
-                                </label>
-                                <FaSmile size={20} className="text-blue-400 hover:text-blue-500 cursor-pointer" />
-                            </div>
-                            <button 
-                                className={`px-4 py-2 rounded-full font-bold ${
-                                    postText.trim() || selectedImage
-                                        ? 'bg-blue-400 text-white hover:bg-blue-500'
-                                        : 'bg-blue-200 text-white cursor-not-allowed'
-                                }`}
-                                disabled={!postText.trim() && !selectedImage}
-                            >
-                                Post
-                            </button>
+                        <input value={description} onChange={(e) => setDescription(e.target.value)} className='w-full outline-none border-none text-xl ml-2' type="text" placeholder='What is happening?!' />
+                    </div>
+                    <div className='flex items-center justify-between p-4 border-b border-gray-300'>
+                        <div>
+                            <CiImageOn size="24px" />
                         </div>
+                        <button onClick={submitHandler} className='bg-[#1D9BF0] px-4 py-1 text-lg text-white text-right border-none rounded-full '>Post</button>
                     </div>
                 </div>
             </div>
+
         </div>
     );
 }

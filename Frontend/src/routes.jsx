@@ -19,27 +19,23 @@ const router = createBrowserRouter([
         element:<Feed/>
       },
       {
-        path:'/profile',
+        path:'/profile/:id',
         element:<Profile/>
+      },{
+        path:'/bookmarks',
+        element:<Bookmarks/>
+      },{
+        path: '/explore',
+        element: <Explore />,
+      },{
+        path: '/notifications',
+    element: <Notifications />,
       }
     ]
   },
   {
     path:'/login',
     element:<SignIn/>
-  },
- 
-  {
-    path: '/explore',
-    element: <Explore />,
-  },
-  {
-    path: '/notifications',
-    element: <Notifications />,
-  },
-  {
-    path: '/bookmarks',
-    element: <Bookmarks />,
   },
 ]);
 

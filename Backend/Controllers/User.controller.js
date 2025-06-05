@@ -23,7 +23,6 @@ export const Register = async (req, res) => {
 
         const createdUser = await User.create({ name, username, email, password: hashedPassword });
         const updateUser = await User.findById(createdUser._id).select("-password");
-        
         return res.status(201).json({
             message: "User created successfully",
             success: true,
@@ -60,10 +59,13 @@ export const Login = async (req, res) => {
                 success: false
             });
         }
+        //remove password from user object
+        const userWithoutPassword = await User.findById(user._id).select("-password");
         //create a token
         const token = await jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
         return res.status(200).cookie("token", token, { expiresIn: "1d", httpOnly: true }).json({
             message: "Login successful",
+            user: userWithoutPassword,
             success: true,
         })
     } catch (error) {
@@ -101,14 +103,16 @@ export const Bookmark = async (req, res) => {
                 success: false
             });
         }
-        if (user.bookmarks.includes(tweetId)) {
+        if (user.bookmarks.includes(tweetId) && tweet.bookmark.includes(userId)){
             await User.findByIdAndUpdate(userId, { $pull: { bookmarks: tweetId } });
+            await Tweet.findByIdAndUpdate(tweetId, { $pull: { bookmark: userId } });
             return res.status(200).json({
                 message: "Tweet removed from bookmarks",
                 success: true
             })
         } else {
             await User.findByIdAndUpdate(userId, { $push: { bookmarks: tweetId } });
+            await Tweet.findByIdAndUpdate(tweetId, { $push: { bookmark: userId } });
             return res.status(200).json({
                 message: "Tweet added to bookmarks",
                 success: true

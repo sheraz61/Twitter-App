@@ -1,12 +1,61 @@
 import React, { useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
-
-
+import axios from 'axios';
+import { USER_API_ENDPOINT } from '../Utils/constant.js'
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { getUser } from '../Redux/userSlice.js';
 function SignIn() {
-  const [isLogin,setIsLogin] = useState(true);
+  const dispatch = useDispatch()
+  const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const signInSignUpHandler = () => {
     setIsLogin(!isLogin);
+  }
+  const submitHandler = async (e) => {
+    e.preventDefault()
+    if (isLogin) {
+      // Handle login
+      try {
+        const res = await axios.post(`${USER_API_ENDPOINT}/login`, { email, password }, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        })
+        dispatch(getUser(res?.data?.user))
+        if (res.data.success) {
+          navigate('/')
+          toast.success(res.data.message)
+        }
+      } catch (error) {
+        toast.error(error.response.data.message)
+      }
+    } else {
+      // Handle sign up
+      try {
+        const res = await axios.post(`${USER_API_ENDPOINT}/register`, { name, username, email, password }, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        })
+        if (res.data.success) {
+          setIsLogin(true)
+          toast.success(res.data.message)
+        }
+      } catch (error) {
+        toast.error(error.response.data.message)
+      }
+
+    }
+
   }
 
   return (
@@ -38,37 +87,45 @@ function SignIn() {
           </div>
 
           {/* Sign in form */}
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={submitHandler}>
             {!isLogin && (<> <input
               type="text"
               name="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Name"
               className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-400"
               required
             />
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-400"
-              required
-            /></>)}
-           
+              <input
+                type="text"
+                name="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+                className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-400"
+                required
+              /></>)}
+
             <input
               type="email"
               name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-400"
               required
             />
-            
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-400 pr-12"
-                required
-              />
+
+            <input
+              type="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-400 pr-12"
+              required
+            />
             <button
               type="submit"
               className="w-full bg-black text-white rounded-full py-3 font-bold hover:bg-gray-800 transition-colors"
